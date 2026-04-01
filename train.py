@@ -35,8 +35,6 @@ from sklearn.metrics import (
 )
 import joblib
 
-
-
 try:
     import optuna
     from optuna.samplers import TPESampler
@@ -69,18 +67,23 @@ except ImportError:
     print("[!] catboost 없음 → pip install catboost")
 
 # =============================================================================
-# ── 0. 전역 설정 ──────────────────────────────────────────────────────────────
+# ── 0. 전역 설정 (경로 구조 최적화) ──────────────────────────────────────────
 # =============================================================================
-DATA_PATH      = r"./data/processed/kyrbs2020_clean_v1.csv"
-WEIGHT_COL     = "W" # 실제 엑셀 파일에 있는 이름인 가중치 'W'로 변경
-OUTPUT_DIR     = "outputs_v3"
+DATA_PATH      = "./data/processed/kyrbs2020_clean_v1.csv" # 데이터 경로
+MODELS_DIR     = "./models" # 학습된 모델, 스케일러, 메타데이터 저장 경로
+PLOTS_DIR      = "./plots"  # 시각화 이미지 저장 경로
+
+WEIGHT_COL     = "W" 
 RANDOM_SEED    = 42
 TEST_SIZE      = 0.20      # 전체의 20% → Test
 VAL_RATIO      = 0.25      # 나머지 80% 중 25% → Val (전체의 20% 달성, 최종 6:2:2)
 CV_FOLDS       = 5
-OPTUNA_TRIALS  = 30        # 시간 부족으로 50-> 30으로 조정
+OPTUNA_TRIALS  = 30        
 
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+# 폴더가 없으면 자동 생성
+os.makedirs(MODELS_DIR, exist_ok=True)
+os.makedirs(PLOTS_DIR, exist_ok=True)
+
 plt.rcParams["axes.unicode_minus"] = False
 try:
     plt.rcParams["font.family"] = "Malgun Gothic"   # Windows
@@ -129,13 +132,8 @@ MENTAL_VARS = ["anxiety", "stress", "despair", "suicidal_thoughts"]
 SP_VAR      = ["smartphone_use_day", "smartphone_use_weekend", "smartphone_dependence"]
 SL_VAR      = ["sleep_quality"]
 
-
-# ML용: 원본 변수만 활용 (12개)
 ALL_FEATS = DEMO_VARS + MENTAL_VARS + SP_VAR + SL_VAR
 TARGET    = "oral_poor"
-
-# 통계 분석용: ML과 동일 (파생변수 없음)
-STATS_FEATS = ALL_FEATS
 
 VAR_KOR = {
     "gender": "성별", "school": "학교급", "grade": "학업성적",
@@ -152,10 +150,7 @@ X_raw = df_m[ALL_FEATS].to_numpy(dtype=float)
 y_raw = df_m[TARGET].to_numpy(dtype=float)
 w_raw = df_m[WEIGHT_COL].to_numpy(dtype=float)
 
-pos_rate = y_raw.mean()
-
 w_final = w_raw
-
 
 # ── 6:2:2 데이터 분할 ──────────────────────────────────────────────────────
 # =============================================================================
@@ -163,7 +158,6 @@ print("\n" + "=" * 70)
 print(" STEP 2 │ 머신러닝 데이터 분할 (6:2:2 = Train:Val:Test)")
 print("=" * 70)
 
-# 분할 시에도 w_final (원본 가중치)를 넘깁니다.
 X_tv, X_test, y_tv, y_test, w_tv, w_test = train_test_split(
     X_raw, y_raw, w_final, test_size=TEST_SIZE, stratify=y_raw, random_state=RANDOM_SEED
 )
@@ -171,7 +165,6 @@ X_train, X_val, y_train, y_val, w_train, w_val = train_test_split(
     X_tv, y_tv, w_tv, test_size=VAL_RATIO, stratify=y_tv, random_state=RANDOM_SEED
 )
 
-n_total = len(y_raw)
 print(f"  Train  : {len(y_train):>6,}개 (60%)")
 print(f"  Val    : {len(y_val):>6,}개 (20%)")
 print(f"  Test   : {len(y_test):>6,}개 (20%)")
@@ -189,12 +182,10 @@ class WeightedStandardScaler:
             self.mean_ = np.mean(X, axis=0)
             self.scale_ = np.std(X, axis=0)
         else:
-            # 원본 가중치를 사용하여 모집단 규모의 평균과 표준편차 도출
-            # 가중치 정규화 없이 원본 가중치(W)를 그대로 weights로 사용합니다.
             self.mean_ = np.average(X, axis=0, weights=sample_weight)
             variance = np.average((X - self.mean_)**2, axis=0, weights=sample_weight)
             self.scale_ = np.sqrt(variance)
-            self.scale_[self.scale_ == 0] = 1.0 # 0 나누기 방지
+            self.scale_[self.scale_ == 0] = 1.0 
         return self
 
     def transform(self, X):
@@ -231,7 +222,7 @@ def evaluate_model(name, model, X_te, y_te, w_te, thresh, X_tr=None, y_tr=None, 
     
     if X_tr is not None:
         prob_tr = model.predict_proba(X_tr)[:, 1]
-        auc_tr  = roc_auc_score(y_tr, prob_tr, sample_weight=w_tr) # type: ignore
+        auc_tr  = roc_auc_score(y_tr, prob_tr, sample_weight=w_tr) 
         row["Train AUC"]   = round(auc_tr, 4)
         row["Overfit Gap"] = round(auc_tr - auc_te, 4)
 
@@ -239,14 +230,10 @@ def evaluate_model(name, model, X_te, y_te, w_te, thresh, X_tr=None, y_tr=None, 
 
 def cv_evaluate_multi(model, X, y, w, n_splits=CV_FOLDS):
     skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=RANDOM_SEED)
-    
-    # 4가지 지표를 담을 딕셔너리 준비
     metrics = {"AUC": [], "Recall": [], "Precision": [], "F2": []}
     
     for tr_i, val_i in skf.split(X, y):
         m = clone(model)
-        
-        # XGBoost CV 에러 방지용
         if hasattr(m, "early_stopping_rounds") and getattr(m, "early_stopping_rounds") is not None:
             m.set_params(early_stopping_rounds=None)
             
@@ -255,37 +242,29 @@ def cv_evaluate_multi(model, X, y, w, n_splits=CV_FOLDS):
         except TypeError:
             m.fit(X[tr_i], y[tr_i])
         
-        # Train Fold에서 임계값 찾기 (Data Leakage 꼼수 방지)
         if hasattr(m, "predict_proba"):
             prob_tr = m.predict_proba(X[tr_i])[:, 1]
             fpr_tr, tpr_tr, thresh_tr = roc_curve(y[tr_i], prob_tr, sample_weight=w[tr_i])
-            
-            # Train에서 Recall 0.85에 가장 가까운 임계값 도출
             target_idx = np.argmin(np.abs(tpr_tr - TARGET_RECALL))
             opt_thresh_cv = thresh_tr[target_idx]
             
-            # Validation Fold에 적용하여 예측
             prob_val = m.predict_proba(X[val_i])[:, 1]
             pred_val = (prob_val >= opt_thresh_cv).astype(int)
             auc_val = roc_auc_score(y[val_i], prob_val, sample_weight=w[val_i])
         else:
             pred_val = m.predict(X[val_i])
-            auc_val = 0 # predict_proba가 없는 경우
+            auc_val = 0 
             
-        # 각 지표 계산 및 저장
         metrics["AUC"].append(auc_val)
         metrics["Recall"].append(recall_score(y[val_i], pred_val, sample_weight=w[val_i], zero_division=0))
         metrics["Precision"].append(precision_score(y[val_i], pred_val, sample_weight=w[val_i], zero_division=0))
         metrics["F2"].append(fbeta_score(y[val_i], pred_val, beta=2, sample_weight=w[val_i], zero_division=0))
         
-    # 각 지표의 평균값을 딕셔너리로 반환
     return {k: np.mean(v) for k, v in metrics.items()}
 
-# recall ≥ 0.85
 TARGET_RECALL = 0.85
 
 def optuna_fast_objective(model_fn):
-    """Recall ≥ TARGET_RECALL을 만족하는 threshold 중 F1이 최대인 지점을 반환"""
     m = model_fn()
     try:
         m.fit(X_tr, y_tr, sample_weight=w_tr)
@@ -295,15 +274,11 @@ def optuna_fast_objective(model_fn):
     if hasattr(m, "predict_proba"):
         yprob_val = m.predict_proba(X_val_s)[:, 1]
         fpr, tpr, thresholds_roc = roc_curve(y_val, yprob_val, sample_weight=w_val)
-        
-        # Recall(=TPR) ≥ TARGET_RECALL 인 구간 필터링
         valid_mask = tpr >= TARGET_RECALL
         if valid_mask.any():
-            # 해당 구간에서 가장 높은 threshold 선택 (= Precision이 가장 높은 지점)
             valid_indices = np.where(valid_mask)[0]
             best_idx = valid_indices[np.argmax(thresholds_roc[valid_indices])]
         else:
-            # TARGET_RECALL에 도달하지 못하면 가장 가까운 지점
             best_idx = np.argmin(np.abs(tpr - TARGET_RECALL))
         
         opt_thresh = thresholds_roc[best_idx]
@@ -315,14 +290,13 @@ def optuna_fast_objective(model_fn):
 
 # =============================================================================
 # ── 5. Optuna 하이퍼파라미터 최적화
-# ──────────────────────────────────────────
 # =============================================================================
 print("\n" + "=" * 70)
 print(f" STEP 4 │ Optuna 하이퍼파라미터 최적화  (Recall 극대화 탐색)")
 print("=" * 70)
 
 best_params: dict = {}
-FAST_TRIALS = 30 
+FAST_TRIALS = OPTUNA_TRIALS 
 
 if HAS_OPTUNA:
     def lr_objective(trial):
@@ -372,7 +346,7 @@ if HAS_OPTUNA and HAS_XGB:
 if HAS_OPTUNA and HAS_LGB:
     def lgb_objective(trial):
         kw = dict(
-            n_estimators = trial.suggest_int("n_estimators", 100, 250, step=50), # 🚀 최대치 대폭 축소
+            n_estimators = trial.suggest_int("n_estimators", 100, 250, step=50), 
             max_depth = trial.suggest_int("max_depth", 3, 8), 
             learning_rate = trial.suggest_float("learning_rate", 0.02, 0.2, log=True), 
             num_leaves = trial.suggest_int("num_leaves", 15, 63), 
@@ -400,7 +374,8 @@ if HAS_OPTUNA and HAS_CAT:
     best_params["CAT"] = study_cat.best_params
     print(f"  [CAT]  best={study_cat.best_value:.4f}")
 
-with open(f"{OUTPUT_DIR}/best_params.json", "w", encoding="utf-8") as f:
+# JSON 파라미터는 models 폴더에 저장
+with open(f"{MODELS_DIR}/best_params.json", "w", encoding="utf-8") as f:
     json.dump(best_params, f, ensure_ascii=False, indent=2)
 
 # =============================================================================
@@ -468,20 +443,14 @@ for name, model in base_definitions.items():
     print(f"완료 ({time.time()-t0:.1f}s)")
     trained_models[name] = model
 
-
-
-
 print("\n" + "=" * 70)
 print(f" STEP 6 │ {CV_FOLDS}-Fold CV (Precision, F2, AUC, Recall 확인)")
 print("=" * 70)
 cv_results: dict = {}
 
 for name, model in trained_models.items():
-    # 새로 만든 다중 지표 평가 함수 호출
     res = cv_evaluate_multi(model, X_tr, y_tr, w_tr, n_splits=CV_FOLDS)
     cv_results[name] = res
-    
-    # 4가지 지표가 한눈에 보이도록 출력
     print(f" ■ {name:20s}")
     print(f"   ↳ AUC: {res['AUC']:.4f} | Recall: {res['Recall']:.4f} | Precision: {res['Precision']:.4f} | F2-Score: {res['F2']:.4f}")
 
@@ -496,11 +465,9 @@ result_rows: list = []
 probs_dict:  dict = {}
 
 for name, model in trained_models.items():
-    
     yprob_val = model.predict_proba(X_val_s)[:, 1]
     fpr, tpr, thresholds_roc = roc_curve(y_val, yprob_val, sample_weight=w_val)
     
-    # Recall(=TPR) ≥ TARGET_RECALL 인 구간에서 가장 높은 threshold 선택
     valid_mask = tpr >= TARGET_RECALL
     if valid_mask.any():
         valid_indices = np.where(valid_mask)[0]
@@ -509,7 +476,6 @@ for name, model in trained_models.items():
         best_idx = np.argmin(np.abs(tpr - TARGET_RECALL))
     opt_thresh = thresholds_roc[best_idx]
             
-    # 찾은 '최적 임계값(opt_thresh)'을 넣어서 Test 셋에 최종 평가
     row, prob_te = evaluate_model(
         name, model,
         X_te=X_test_s, y_te=y_test, w_te=w_test,
@@ -521,7 +487,6 @@ for name, model in trained_models.items():
 
 res_df = pd.DataFrame(result_rows).set_index("Model")
 
-# ── 성능표 출력 (Recall 내림차순 정렬) ────────────
 display_cols = ["Opt_Thresh", "ROC-AUC", "Accuracy", "Precision", "Recall", "F1-Score"]
 print(f"\n  ┌─ 성능 비교표 (Test, Recall 내림차순 정렬) " + "─" * 20)
 print(res_df[display_cols].sort_values(by=["Recall", "ROC-AUC"], ascending=[False, False]).round(4).to_string())
@@ -529,13 +494,11 @@ print(res_df[display_cols].sort_values(by=["Recall", "ROC-AUC"], ascending=[Fals
 if "Overfit Gap" in res_df.columns:
     print("\n  ┌─ 과적합 진단 (Train AUC vs Test AUC) " + "─" * 30)
     for mname in res_df.index:
-        if "Overfit Gap" in res_df.columns:
-            g = res_df.loc[mname, "Overfit Gap"]
-            if pd.notna(g):
-                flag = "⚠️  과적합 주의" if float(g) > 0.05 else "✅ 정상"
-                print(f"    {mname:25s}  Gap={g:.4f}  {flag}")
+        g = res_df.loc[mname, "Overfit Gap"]
+        if pd.notna(g):
+            flag = "⚠️  과적합 주의" if float(g) > 0.05 else "✅ 정상"
+            print(f"    {mname:25s}  Gap={g:.4f}  {flag}")
 
-# 의료 목적에 맞게 재현율(Recall)이 가장 높은 모델을 1위로 선정
 best_model_name = res_df["Recall"].idxmax()
 best_model_obj  = trained_models[best_model_name]
 best_prob_te    = probs_dict[best_model_name]
@@ -548,10 +511,11 @@ print(f"     Opt_Thresh={res_df.loc[best_model_name,'Opt_Thresh']}  "
       f"AUC={res_df.loc[best_model_name,'ROC-AUC']}  "
       f"Recall={res_df.loc[best_model_name,'Recall']}")
 
-res_df.to_csv(f"{OUTPUT_DIR}/ml_performance_table_recall.csv", encoding="utf-8-sig")
+# CSV 결과물은 models 폴더에 저장
+res_df.to_csv(f"{MODELS_DIR}/ml_performance_table_recall.csv", encoding="utf-8-sig")
 
 # =============================================================================
-# ── 9. 시각화 ────────────────────────────────────────────────────────────────
+# ── 9. 시각화 (plots 폴더에 저장) ─────────────────────────────────────────────
 # =============================================================================
 print("\n" + "=" * 70)
 print(" STEP 8 │ 시각화 저장")
@@ -574,7 +538,7 @@ ax.set_title("ROC Curve 비교", fontsize=14, fontweight="bold")
 ax.legend(loc="lower right", fontsize=9)
 ax.grid(alpha=0.3)
 plt.tight_layout()
-plt.savefig(f"{OUTPUT_DIR}/01_roc_curves.png", dpi=150)
+plt.savefig(f"{PLOTS_DIR}/01_roc_curves.png", dpi=150)
 plt.close()
 
 # ── 10-2. 최고 모델 Confusion Matrix
@@ -584,7 +548,7 @@ disp = ConfusionMatrixDisplay(confusion_matrix=cm.astype(int), display_labels=["
 disp.plot(ax=ax, colorbar=False, cmap="Blues")
 ax.set_title(f"Confusion Matrix — {best_model_name}\n(threshold={best_thresh:.3f})", fontsize=11)
 plt.tight_layout()
-plt.savefig(f"{OUTPUT_DIR}/03_confusion_matrix_best.png", dpi=150)
+plt.savefig(f"{PLOTS_DIR}/03_confusion_matrix_best.png", dpi=150)
 plt.close()
 
 # ── 10-3. Feature Importance
@@ -605,7 +569,7 @@ if fi_target:
     ax.set_title(f"변수 중요도 ({fi_name})\n★ = 핵심 변수 (스마트폰·수면)", fontsize=12, fontweight="bold")
     ax.grid(axis="x", alpha=0.3)
     plt.tight_layout()
-    plt.savefig(f"{OUTPUT_DIR}/04_feature_importance.png", dpi=150)
+    plt.savefig(f"{PLOTS_DIR}/04_feature_importance.png", dpi=150)
     plt.close()
 
 # =============================================================================
@@ -615,12 +579,11 @@ print("\n" + "=" * 70)
 print(" STEP 9 │ XGBoost Youden's Index 계산 + 모델 저장")
 print("=" * 70)
 
-# ── XGBoost 모델로 Youden's Index 최적 임계값 도출 ──
 xgb_model = trained_models["XGBoost"]
 yprob_val_xgb  = xgb_model.predict_proba(X_val_s)[:, 1]
 fpr_y, tpr_y, thresholds_y = roc_curve(y_val, yprob_val_xgb, sample_weight=w_val)
 
-j_scores = tpr_y - fpr_y  # Youden's J = Sensitivity + Specificity - 1
+j_scores = tpr_y - fpr_y 
 youden_best_idx    = np.argmax(j_scores)
 youden_threshold   = float(thresholds_y[youden_best_idx])
 youden_j_value     = float(j_scores[youden_best_idx])
@@ -634,11 +597,10 @@ print(f"  │ 민감도(Recall)    = {youden_sensitivity:.4f}")
 print(f"  │ 특이도(Specificity)= {youden_specificity:.4f}")
 print(f"  └─────────────────────────────────────────────────────")
 
-# ── 모델 및 메타데이터 저장 ──
-joblib.dump(xgb_model, f"{OUTPUT_DIR}/xgboost_model.pkl")
-joblib.dump(scaler,         f"{OUTPUT_DIR}/scaler.pkl")
+# ── 모델 및 메타데이터는 models 폴더에 저장 ──
+joblib.dump(xgb_model, f"{MODELS_DIR}/xgboost_model.pkl")
+joblib.dump(scaler,    f"{MODELS_DIR}/scaler.pkl")
 
-# Streamlit 앱에서 사용할 메타데이터 저장
 meta = {
     "model_name"        : "XGBoost",
     "features"          : ALL_FEATS,
@@ -651,31 +613,31 @@ meta = {
     "recall_threshold"  : float(best_thresh) if best_model_name == "XGBoost" else float(res_df.loc["XGBoost", "Opt_Thresh"]),
     "encode_map"        : {k: {str(kk): vv for kk, vv in v.items()} for k, v in ENCODE_MAP.items()},
 }
-with open(f"{OUTPUT_DIR}/model_meta.json", "w", encoding="utf-8") as f:
+with open(f"{MODELS_DIR}/model_meta.json", "w", encoding="utf-8") as f:
     json.dump(meta, f, ensure_ascii=False, indent=2)
 
 print(f"\n  ✅ 저장 완료:")
-print(f"     - {OUTPUT_DIR}/xgboost_model.pkl")
-print(f"     - {OUTPUT_DIR}/scaler.pkl")
-print(f"     - {OUTPUT_DIR}/model_meta.json")
+print(f"     - {MODELS_DIR}/xgboost_model.pkl")
+print(f"     - {MODELS_DIR}/scaler.pkl")
+print(f"     - {MODELS_DIR}/model_meta.json")
+print(f"     - {MODELS_DIR}/best_params.json")
+print(f"     - {MODELS_DIR}/ml_performance_table_recall.csv")
+print(f"     - {PLOTS_DIR}/01_roc_curves.png 외 2건")
 
 # =============================================================================
 # ── 11. 최종 요약 출력 ────────────────────────────────────────────────────────
 # =============================================================================
 print("\n" + "=" * 70)
-print(" 최종 요약 ─ 구강건강 분석 통합 파이프라인 (통계 & ML 예측)")
+print(" 최종 요약 ─ 구강건강 분석 통합 파이프라인 (ML 예측)")
 print("=" * 70)
 
-# 1. 표의 컬럼명을 알아보기 쉽게 한글/영문 혼합으로 변경
 final_display_df = res_df[["Opt_Thresh", "Accuracy", "ROC-AUC", "Precision", "Recall", "F1-Score"]].copy()
 final_display_df.columns = ["임계값", "정확도(Acc)", "AUC", "정밀도(Pre)", "재현율(Rec)", "F1-Score"]
 
-# 2. 1위 모델 이름 앞에 트로피 이모지(🏆) 붙여주기
 final_display_df.index = [f"🏆 {idx}" if idx == best_model_name else f"   {idx}" for idx in final_display_df.index]
 
 print(f"\n  📈 머신러닝 성능 비교 (Test셋, 재현율(Recall) 최우선 내림차순)")
 print("  " + "─" * 75)
-# 3. 데이터프레임 자체를 표 형태로 예쁘게 출력
 print(final_display_df.sort_values(by=["재현율(Rec)", "AUC"], ascending=[False, False]).round(4).to_string())
 print("  " + "─" * 75)
 
