@@ -477,9 +477,6 @@ streamlit run app.py
 
 ### Feature Importance
 
-> 모델 해석력을 높이기 위해 변수 중요도 그래프를 함께 제시했습니다.  
-> `plots/04_feature_importance.png` 파일이 있는 경우 아래 이미지가 표시됩니다.
-
 <img src="plots/04_feature_importance.png" width="100%"/>
 
 <br/>
