@@ -229,34 +229,7 @@ O_SYMP1 + O_SYMP2 + O_SYMP3 + O_SYMP4 ≥ 1 → 구강 증상 있음
 
 ---
 
-## 2-3. EDA & Statistical Analysis
-
-EDA를 통해 스마트폰 사용 시간, 수면 상태, 스마트폰 의존도와  
-구강 증상 경험 간의 관계를 시각적으로 확인했습니다.
-
-<br/>
-
-### 주요 분석 관점
-
-| 분석 항목 | 목적 |
-|---|---|
-| 스마트폰 사용 시간별 구강 증상 비율 | 사용 시간이 증가할수록 구강 증상 경험률이 달라지는지 확인 |
-| 주중/주말 스마트폰 사용 비교 | 평일과 주말 사용 패턴 차이 분석 |
-| 스마트폰 의존군 비율 | 일반군과 위험군의 분포 확인 |
-| 수면 상태와 구강 건강 관계 | 수면 부족 여부에 따른 구강 증상 차이 분석 |
-| 복합 위험도 분석 | 스마트폰 의존도와 수면 상태를 함께 고려한 위험도 확인 |
-
-<br/>
-
-### EDA Dashboard
-
-<img src="assets/05_eda_dashboard.png" width="100%"/>
-
-<br/>
-
----
-
-## 2-4. Modeling & Optimization
+## 2-3. Modeling & Optimization
 
 본 프로젝트에서는 구강 건강 위험도 예측을 위해 여러 머신러닝 모델을 비교 실험했습니다.  
 의료·헬스케어 위험 예측에서는 위험군을 놓치지 않는 것이 중요하므로,  
@@ -319,7 +292,7 @@ Youden's Index 기반 최종 임계값 계산
 
 ---
 
-## 2-5. System Flow
+## 2-4. System Flow
 
 <img src="assets/06_systemflow.png" width="100%"/>
 
@@ -351,7 +324,7 @@ Youden's Index 기반 최종 임계값 계산
 
 ---
 
-## 2-6. Project Structure
+## 2-5. Project Structure
 
 ```text
 Oral_Health_Prediction/
@@ -396,7 +369,7 @@ Oral_Health_Prediction/
 
 ---
 
-## 2-7. How to Run
+## 2-6. How to Run
 
 ### 1. Repository Clone
 
