@@ -16,6 +16,22 @@
 
 <br/>
 
+## 🛠 Tech Stack
+
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Pandas](https://img.shields.io/badge/Pandas-150458?style=for-the-badge&logo=pandas&logoColor=white)
+![NumPy](https://img.shields.io/badge/NumPy-013243?style=for-the-badge&logo=numpy&logoColor=white)
+![Scikit Learn](https://img.shields.io/badge/Scikit--Learn-F7931E?style=for-the-badge&logo=scikitlearn&logoColor=white)
+![XGBoost](https://img.shields.io/badge/XGBoost-FF6600?style=for-the-badge&logo=xgboost&logoColor=white)
+![LightGBM](https://img.shields.io/badge/LightGBM-02569B?style=for-the-badge)
+![CatBoost](https://img.shields.io/badge/CatBoost-FFCC00?style=for-the-badge)
+![Optuna](https://img.shields.io/badge/Optuna-3155A4?style=for-the-badge)
+![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
+![Plotly](https://img.shields.io/badge/Plotly-3F4F75?style=for-the-badge&logo=plotly&logoColor=white)
+![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)
+
+<br/>
+
 ---
 
 # 1. 기획
@@ -89,59 +105,7 @@
 
 # 2. 개발
 
-## 2-1. Tech Summary
-
-본 프로젝트는 질병관리청 청소년건강행태조사 원시자료를 기반으로  
-데이터 전처리, EDA, 통계 분석, 머신러닝 모델링, Streamlit 서비스 구현까지 수행한  
-데이터 분석 및 AI 서비스 개발 프로젝트입니다.
-
-<br/>
-
-### 전체 개발 흐름
-
-```text
-SAS 원시자료 로드
-        ↓
-분석 변수 선택
-        ↓
-결측치 및 이상치 처리
-        ↓
-스마트폰 과의존 점수 생성
-        ↓
-구강 건강 위험 타깃 변수 생성
-        ↓
-EDA 및 통계 분석
-        ↓
-머신러닝 모델 학습
-        ↓
-모델 성능 비교
-        ↓
-최종 모델 저장
-        ↓
-Streamlit 웹 서비스 연동
-```
-
-<br/>
-
-### 적용 기술 및 기법
-
-| 단계 | 사용 기술 및 기법 | 설명 |
-|---|---|---|
-| 데이터 로드 | `pandas`, SAS 데이터 처리 | `kyrbs2020.sas7bdat` 원시자료 로드 |
-| 데이터 전처리 | 결측치 처리, 변수 선택, 파생변수 생성 | 분석 목적에 맞는 주요 변수 추출 |
-| Feature Engineering | 스마트폰 과의존 점수 계산, 구강 위험 타깃 생성 | 설문 문항 기반 점수화 및 분류 기준 생성 |
-| EDA | 빈도 분석, 교차 분석, 시각화 | 스마트폰 사용, 수면, 구강 증상 관계 확인 |
-| 통계 분석 | 그룹별 비율 비교, 위험요인 탐색 | 변수별 구강 증상 경험 차이 분석 |
-| 모델링 | Logistic Regression, Random Forest, XGBoost | 구강 건강 위험도 예측 모델 학습 |
-| 모델 평가 | Accuracy, Precision, Recall, F1-score, ROC-AUC | 헬스케어 위험 예측 특성을 고려해 Recall 중심 평가 |
-| 서비스 구현 | Streamlit | 사용자 입력 기반 실시간 예측 웹 서비스 구현 |
-| 모델 저장/로드 | Joblib, Pickle | 학습된 모델과 스케일러를 서비스에 연동 |
-
-<br/>
-
----
-
-## 2-2. Dataset
+## 2-1. Dataset
 
 본 프로젝트에서는 **질병관리청 제16차(2020년) 청소년건강행태조사 원시자료**를 활용했습니다.
 
@@ -159,79 +123,113 @@ Streamlit 웹 서비스 연동
 | 영문명 | Korea Youth Risk Behavior Survey, KYRBS |
 | 제공기관 | 질병관리청 |
 | 조사연도 | 2020년 |
-| 조사대상 | 중학교 1학년 ~ 고등학교 3학년 |
-| 원자료 참여자 수 | 54,948명 |
-| 원자료 컬럼 수 | 170개 |
-| 제공 형식 | SAS 원시자료 |
 | 사용 파일 | `kyrbs2020.sas7bdat` |
+| 원자료 크기 | 54,948명 × 170개 컬럼 |
+| 최종 분석 데이터 | 52,627명 × 14개 컬럼 |
+| 제공 형식 | SAS 원시자료 |
 | 활용 목적 | 스마트폰 과의존, 수면, 정신건강, 구강건강 관련 변수 기반 구강 건강 위험도 예측 |
 
 <br/>
 
 ### 주요 활용 변수
 
-| 구분 | 활용 변수 예시 | 원자료 변수 예시 |
+| 구분 | 활용 변수 예시 | 원자료 변수 |
 |---|---|---|
-| 인구통계 정보 | 성별, 학년, 학교급, 경제수준 | `SEX`, `GRADE`, `SCHOOL`, `E_SES` |
-| 스마트폰 사용 정보 | 주중 스마트폰 사용 여부 및 사용 시간, 주말 스마트폰 사용 여부 및 사용 시간 | `INT_SPWD`, `INT_SPWD_TM`, `INT_SPWK`, `INT_SPWK_TM` |
+| 인구통계 정보 | 성별, 학교급, 학업성적, 경제수준 | `SEX`, `GRADE`, `E_S_RCRD`, `E_SES` |
+| 스마트폰 사용 정보 | 주중/주말 스마트폰 사용 시간 | `INT_SPWD_TM`, `INT_SPWK_TM` |
 | 스마트폰 과의존 정보 | 스마트폰 과의존 진단 문항 | `INT_SP_OU_1` ~ `INT_SP_OU_10` |
-| 수면 관련 정보 | 수면 충족도, 수면 시간 | `M_SLP_EN`, `M_SLP_HR`, `M_SLP_MM` |
-| 정신건강 정보 | 스트레스, 우울감, 불안, 자살 생각 | `M_STR`, `M_SAD`, `M_GAD_1` ~ `M_GAD_7`, `M_SUI_CON` |
-| 구강 건강 정보 | 구강 증상 경험, 하루 칫솔질 횟수, 학교에서 점심식사 후 칫솔질 여부 | `O_SYMP1` ~ `O_SYMP4`, `O_BR_FQ`, `O_BR_S` |
-
-<br/>
-
-### Target Variable
-
-본 프로젝트에서는 구강 건강 관련 증상 경험 변수를 기반으로  
-구강 건강 위험 여부를 정의하고, 이를 예측하는 분류 모델을 구축했습니다.
-
-| 구분 | 내용 |
-|---|---|
-| 예측 목표 | 청소년의 구강 건강 위험도 예측 |
-| 문제 유형 | Binary Classification |
-| 주요 타깃 후보 | 구강 증상 경험 여부 |
-| 활용 방식 | 구강 증상 관련 변수를 조합하여 위험군 여부 생성 |
+| 수면 관련 정보 | 수면 충족도 | `M_SLP_EN` |
+| 정신건강 정보 | 불안, 스트레스, 우울감, 자살 생각 | `M_GAD_1` ~ `M_GAD_7`, `M_STR`, `M_SAD`, `M_SUI_CON` |
+| 구강 건강 정보 | 치아 깨짐, 씹기 불편, 치아 통증, 잇몸 출혈 | `O_SYMP1` ~ `O_SYMP4` |
+| 표본 가중치 | 복합표본설계 가중치 | `W` |
 
 <br/>
 
 ---
 
-## 2-3. Data Preprocessing
+## 2-2. Data Preprocessing & Feature Engineering
 
-원시 데이터는 SAS 형식으로 제공되었으며, 분석 목적에 맞게 필요한 변수만 선별하고  
-모델 학습에 적합한 형태로 전처리했습니다.
+건강 및 의료 행동 데이터에서는 변수를 어떻게 정의하고 조합하는지에 따라 모델 결과가 크게 달라질 수 있습니다.  
+따라서 본 프로젝트에서는 단순히 원자료 변수를 그대로 사용하지 않고,  
+청소년의 스마트폰 사용 패턴, 수면 상태, 정신건강 상태, 구강 증상 경험을 모델 학습에 적합한 형태로 재구성했습니다.
 
 <br/>
 
 ### 전처리 과정
 
-| 단계 | 내용 |
-|---|---|
-| 데이터 로드 | `kyrbs2020.sas7bdat` 파일 로드 |
-| 변수 선택 | 스마트폰 사용, 수면, 정신건강, 구강건강 관련 변수 추출 |
-| 결측치 처리 | 분석에 필요한 주요 변수 기준 결측값 처리 |
-| 범주형 변수 처리 | 성별, 학교급, 경제수준 등 범주형 변수 인코딩 |
-| 파생변수 생성 | 스마트폰 과의존 점수, 구강 건강 위험 여부 생성 |
-| 학습 데이터 구성 | 모델 학습용 Feature와 Target 분리 |
-| Train/Test Split | 학습 데이터와 검증 데이터 분리 |
+```text
+SAS 원시자료 로드
+        ↓
+분석에 필요한 원시 변수 선택
+        ↓
+스마트폰 사용 시간 범주화
+        ↓
+스마트폰 과의존 점수 생성
+        ↓
+불안 점수 및 정신건강 변수 생성
+        ↓
+구강 증상 경험 여부 타깃 생성
+        ↓
+수면 상태 변수 생성
+        ↓
+결측치 제거
+        ↓
+최종 분석 데이터 저장
+```
 
 <br/>
 
-### Feature Engineering
+### Feature Engineering 상세
 
-| 파생 변수 | 설명 |
+| 파생 변수 | 생성 방식 | 분석적 의미 |
+|---|---|---|
+| `smartphone_use_day` | 주중 스마트폰 사용 시간을 분 단위에서 시간 구간으로 변환 | 평일 스마트폰 사용 패턴 반영 |
+| `smartphone_use_weekend` | 주말 스마트폰 사용 시간을 분 단위에서 시간 구간으로 변환 | 주말 사용 패턴 반영 |
+| `smartphone_dependence` | 스마트폰 과의존 10개 문항 합산 후 23점 기준으로 위험군 분류 | 단순 사용 시간이 아닌 의존 성향 반영 |
+| `anxiety` | GAD-7 문항을 점수화한 뒤 없음/약간/보통/심함으로 범주화 | 정신건강 위험 요인 반영 |
+| `stress` | 스트레스 인지 수준을 상/중/하로 재분류 | 주관적 스트레스 수준 반영 |
+| `despair` | 최근 우울감 및 절망감 경험 여부 변환 | 정신건강 관련 위험 요인 반영 |
+| `suicidal_thoughts` | 자살 생각 여부 변환 | 고위험 심리 상태 반영 |
+| `oral_health` | 4개 구강 증상 중 1개 이상 경험 시 `Yes`로 정의 | 구강 건강 위험도 예측 타깃 |
+| `sleep_quality` | 수면 충족도 응답을 충분/부족으로 재분류 | 수면 상태와 구강 건강의 관계 반영 |
+
+<br/>
+
+### 스마트폰 사용 시간 범주화
+
+| 원자료 형태 | 변환 기준 | 최종 범주 |
+|---|---|---|
+| 분 단위 사용 시간 | 3시간 이하 | `≤3` |
+| 분 단위 사용 시간 | 3시간 초과 ~ 5시간 이하 | `3 ~ 5` |
+| 분 단위 사용 시간 | 5시간 초과 ~ 8시간 이하 | `5 ~ 8` |
+| 분 단위 사용 시간 | 8시간 초과 | `≥8` |
+
+<br/>
+
+### 구강 건강 타깃 정의
+
+본 프로젝트에서는 다음 4개 구강 증상 중 하나라도 경험한 경우를  
+구강 건강 위험군으로 정의했습니다.
+
+| 원자료 변수 | 의미 |
 |---|---|
-| 스마트폰 과의존 점수 | 스마트폰 과의존 진단 문항을 합산하여 생성 |
-| 스마트폰 의존군 | 점수 기준에 따라 일반군, 잠재적 위험군, 고위험군으로 분류 |
-| 수면 상태 | 수면 충족도와 수면 시간 관련 변수를 활용 |
-| 구강 건강 위험 여부 | 구강 증상 경험 변수를 기반으로 이진 분류 타깃 생성 |
+| `O_SYMP1` | 치아가 깨지거나 부러짐 |
+| `O_SYMP2` | 차갑거나 뜨거운 음식을 먹을 때 치아 통증 |
+| `O_SYMP3` | 치아가 쑤시고 욱신거림 |
+| `O_SYMP4` | 잇몸이 아프거나 피가 남 |
+
+<br/>
+
+```text
+O_SYMP1 + O_SYMP2 + O_SYMP3 + O_SYMP4 = 0  → 구강 증상 없음
+O_SYMP1 + O_SYMP2 + O_SYMP3 + O_SYMP4 ≥ 1 → 구강 증상 있음
+```
 
 <br/>
 
 ---
 
-## 2-4. EDA & Statistical Analysis
+## 2-3. EDA & Statistical Analysis
 
 EDA를 통해 스마트폰 사용 시간, 수면 상태, 스마트폰 의존도와  
 구강 증상 경험 간의 관계를 시각적으로 확인했습니다.
@@ -258,63 +256,70 @@ EDA를 통해 스마트폰 사용 시간, 수면 상태, 스마트폰 의존도�
 
 ---
 
-## 2-5. Modeling
+## 2-4. Modeling & Optimization
 
-본 프로젝트에서는 구강 건강 위험도 예측을 위해 여러 머신러닝 모델을 비교하고,  
-예측 성능과 서비스 적용 가능성을 고려하여 최종 모델을 선정했습니다.
+본 프로젝트에서는 구강 건강 위험도 예측을 위해 여러 머신러닝 모델을 비교 실험했습니다.  
+의료·헬스케어 위험 예측에서는 위험군을 놓치지 않는 것이 중요하므로,  
+단순 정확도뿐만 아니라 **Recall, F1-score, ROC-AUC**를 함께 고려했습니다.
 
 <br/>
 
 ### 모델링 과정
 
 ```text
-데이터 로드
-  ↓
-결측치 및 이상치 처리
-  ↓
-범주형 변수 인코딩
-  ↓
-학습/검증 데이터 분리
-  ↓
-여러 머신러닝 모델 학습
-  ↓
-성능 지표 비교
-  ↓
-최종 모델 선정
-  ↓
-Streamlit 서비스 연동
+전처리 데이터 로드
+        ↓
+Feature / Target 분리
+        ↓
+Train / Validation / Test = 6 : 2 : 2 분할
+        ↓
+가중치 기반 표준화 적용
+        ↓
+Optuna 기반 하이퍼파라미터 튜닝
+        ↓
+5-Fold Stratified Cross Validation
+        ↓
+모델별 성능 비교
+        ↓
+Recall 목표 기반 임계값 조정
+        ↓
+Youden's Index 기반 최종 임계값 계산
+        ↓
+최종 XGBoost 모델 저장 및 Streamlit 연동
 ```
 
 <br/>
 
-### 사용 모델
+### 비교 실험 모델
 
-| 모델 | 설명 |
+| 모델 | 활용 목적 |
 |---|---|
 | Logistic Regression | 기준 모델로 활용 |
 | Random Forest | 비선형 관계와 변수 중요도 확인 |
-| XGBoost | 최종 예측 성능 개선을 위한 부스팅 모델 |
+| XGBoost | 최종 예측 모델 후보 |
+| LightGBM | Gradient Boosting 계열 비교 |
+| CatBoost | 범주형 데이터와 앙상블 성능 비교 |
 
 <br/>
 
-### 모델 선정 기준
+### 최적화 전략
 
-본 프로젝트는 헬스케어 위험도 예측 서비스이기 때문에  
-단순 정확도뿐만 아니라 위험군을 놓치지 않는 것이 중요합니다.
-
-따라서 모델 평가는 다음 기준을 함께 고려했습니다.
-
-- 구강 건강 위험군을 잘 탐지하는지
-- Recall 성능이 충분한지
-- 예측 결과를 서비스 화면에서 직관적으로 설명할 수 있는지
-- 사용자 입력값 기반 실시간 예측에 적합한지
-- Streamlit 서비스에 안정적으로 연동 가능한지
+| 항목 | 내용 |
+|---|---|
+| 데이터 분할 | Train : Validation : Test = 6 : 2 : 2 |
+| 교차 검증 | 5-Fold Stratified CV |
+| 하이퍼파라미터 튜닝 | Optuna TPE Sampler |
+| Trial 수 | 30회 |
+| 주요 평가 기준 | Recall, F1-score, ROC-AUC |
+| 목표 Recall | 약 0.85 |
+| 임계값 설정 | Recall 목표 기반 탐색 + Youden's Index |
+| 최종 저장 모델 | XGBoost |
 
 <br/>
 
 ---
 
-## 2-6. System Flow
+## 2-5. System Flow
 
 <img src="assets/06_systemflow.png" width="100%"/>
 
@@ -331,7 +336,7 @@ Streamlit 서비스 연동
         ↓
 입력값 전처리
         ↓
-학습된 머신러닝 모델 로드
+학습된 XGBoost 모델 로드
         ↓
 구강 건강 위험도 예측
         ↓
@@ -346,36 +351,7 @@ Streamlit 서비스 연동
 
 ---
 
-## 2-7. Tech Stack
-
-### Language & Library
-
-| 구분 | 기술 |
-|---|---|
-| Language | Python |
-| Data Analysis | Pandas, NumPy |
-| Visualization | Matplotlib, Plotly |
-| Machine Learning | Scikit-learn, XGBoost |
-| Web Framework | Streamlit |
-| Model Save/Load | Joblib, Pickle |
-| Version Control | Git, GitHub |
-
-<br/>
-
-### Development Environment
-
-| 구분 | 내용 |
-|---|---|
-| OS | Windows |
-| IDE | VS Code / Jupyter Notebook |
-| Package Management | pip / conda |
-| Collaboration | GitHub, Google Drive, Slack |
-
-<br/>
-
----
-
-## 2-8. Project Structure
+## 2-6. Project Structure
 
 ```text
 Oral_Health_Prediction/
@@ -386,16 +362,21 @@ Oral_Health_Prediction/
 │
 ├── data/
 │   ├── raw/
+│   │   └── kyrbs2020.sas7bdat
 │   └── processed/
+│       └── kyrbs2020_clean_v1.csv
 │
 ├── models/
+│   ├── xgboost_model.pkl
+│   ├── scaler.pkl
 │   ├── model_meta.json
-│   └── saved_model_files
+│   ├── best_params.json
+│   └── ml_performance_table_recall.csv
 │
 ├── plots/
-│   ├── roc_curve
-│   ├── confusion_matrix
-│   └── feature_importance
+│   ├── 01_roc_curves.png
+│   ├── 03_confusion_matrix_best.png
+│   └── 04_feature_importance.png
 │
 ├── assets/
 │   ├── 01_main_overview.png
@@ -415,7 +396,7 @@ Oral_Health_Prediction/
 
 ---
 
-## 2-9. How to Run
+## 2-7. How to Run
 
 ### 1. Repository Clone
 
@@ -434,7 +415,15 @@ pip install -r requirements.txt
 
 <br/>
 
-### 3. Run Streamlit App
+### 3. Train Model
+
+```bash
+python train.py
+```
+
+<br/>
+
+### 4. Run Streamlit App
 
 ```bash
 streamlit run app.py
@@ -448,35 +437,50 @@ streamlit run app.py
 
 ## 3-1. Model Performance
 
-본 프로젝트에서는 여러 머신러닝 모델을 비교하여  
-구강 건강 위험도 예측에 적합한 모델을 선정했습니다.
-
-<br/>
-
-<img src="assets/07_roc.png" width="100%"/>
+본 프로젝트에서는 5개 모델을 비교한 결과,  
+**XGBoost가 Recall 0.8522, F1-Score 0.6691로 가장 우수한 최종 모델**로 선정되었습니다.
 
 <br/>
 
 ### 모델 성능 비교
 
-> 아래 표는 모델별 정량 성능을 정리하는 영역입니다.  
-> 최종 성능값이 확정되면 Accuracy, Precision, Recall, F1-score, ROC-AUC 기준으로 추가할 수 있습니다.
-
-| Model | Accuracy | Precision | Recall | F1-score | ROC-AUC |
-|---|---:|---:|---:|---:|---:|
-| Logistic Regression | 추가 필요 | 추가 필요 | 추가 필요 | 추가 필요 | 추가 필요 |
-| Random Forest | 추가 필요 | 추가 필요 | 추가 필요 | 추가 필요 | 추가 필요 |
-| XGBoost | 추가 필요 | 추가 필요 | 추가 필요 | 추가 필요 | 추가 필요 |
+| Model | 임계값 | 정확도(Acc) | AUC | 정밀도(Pre) | 재현율(Rec) | F1-Score |
+|---|---:|---:|---:|---:|---:|---:|
+| 🏆 XGBoost | 0.397 | 0.5764 | 0.6492 | 0.5508 | 0.8522 | 0.6691 |
+| CatBoost | 0.405 | 0.5757 | 0.6489 | 0.5504 | 0.8520 | 0.6687 |
+| Logistic Regression | 0.000 | 0.5001 | 0.5318 | 0.5016 | 0.8488 | 0.6306 |
+| LightGBM | 0.403 | 0.5756 | 0.6489 | 0.5505 | 0.8471 | 0.6674 |
+| Random Forest | 0.415 | 0.5708 | 0.6474 | 0.5474 | 0.8442 | 0.6641 |
 
 <br/>
 
-### 최종 모델 해석
+### 성능 해석
 
 본 프로젝트는 헬스케어 위험도 예측 서비스이므로  
-구강 건강 위험군을 놓치지 않는 것이 중요합니다.
+실제 위험군을 놓치지 않는 것이 중요합니다.
 
-따라서 모델 성능 평가에서는 Accuracy뿐만 아니라  
-**Recall, F1-score, ROC-AUC**를 함께 고려했습니다.
+따라서 최종 모델 선정 시 단순 정확도보다  
+**재현율(Recall)**과 **F1-Score**를 중요하게 고려했습니다.
+
+- XGBoost는 가장 높은 Recall인 **0.8522**를 기록했습니다.
+- CatBoost 역시 Recall 0.8520으로 유사한 성능을 보였으나, XGBoost가 F1-Score에서 소폭 우세했습니다.
+- Logistic Regression은 Recall은 높지만 AUC와 F1-Score가 낮아 최종 모델로는 부적합하다고 판단했습니다.
+- 최종 서비스에서는 XGBoost 모델과 Youden's Index 기반 임계값을 활용했습니다.
+
+<br/>
+
+### ROC Curve
+
+<img src="assets/07_roc.png" width="100%"/>
+
+<br/>
+
+### Feature Importance
+
+> 모델 해석력을 높이기 위해 변수 중요도 그래프를 함께 제시했습니다.  
+> `plots/04_feature_importance.png` 파일이 있는 경우 아래 이미지가 표시됩니다.
+
+<img src="plots/04_feature_importance.png" width="100%"/>
 
 <br/>
 
@@ -585,6 +589,7 @@ EDA 분석 결과를 기반으로 스마트폰 사용 시간, 수면 상태, 구
 | 예방 관리 측면 | 증상 발생 전 생활습관 개선 유도 |
 | 데이터 분석 측면 | 스마트폰 사용, 수면, 정신건강과 구강 건강의 관계 확인 |
 | 서비스 측면 | AI 예측 결과를 웹 서비스 형태로 제공 |
+| 포트폴리오 측면 | 데이터 전처리, 피처 엔지니어링, 모델 최적화, 서비스 구현까지 전체 파이프라인 제시 |
 
 <br/>
 
@@ -597,8 +602,8 @@ EDA 분석 결과를 기반으로 스마트폰 사용 시간, 수면 상태, 구
 - 설문 기반 데이터이므로 사용자의 응답 정확도에 영향을 받을 수 있음
 - 실제 의료 진단이 아닌 구강 건강 위험도 예측 및 참고용 서비스임
 - 데이터셋의 변수 범위 내에서만 예측 가능
-- 외부 검증 데이터에 대한 추가 평가 필요
 - 실제 치과 진료 데이터와 직접 연계된 모델은 아니므로 해석에 주의가 필요함
+- 2020년 단일 연도 데이터를 기반으로 하므로 다른 연도 데이터에 대한 추가 검증 필요
 
 <br/>
 
@@ -609,7 +614,8 @@ EDA 분석 결과를 기반으로 스마트폰 사용 시간, 수면 상태, 구
 - 사용자별 장기 추적 관리 기능 추가
 - 모바일 환경 최적화
 - 지역 기반 치과 정보 추천 기능 고도화
-- 예측 결과에 대한 설명 가능성 강화
+- SHAP 등 설명 가능한 AI 기법을 활용한 예측 근거 제공
+- 다년도 청소년건강행태조사 데이터로 외부 검증 확장
 
 <br/>
 
@@ -619,10 +625,12 @@ EDA 분석 결과를 기반으로 스마트폰 사용 시간, 수면 상태, 구
 
 | 역할 | 내용 |
 |---|---|
-| 데이터 전처리 | 분석에 필요한 변수 정리 및 전처리 |
+| 데이터 전처리 | KYRBS 2020 원시자료 로드, 주요 변수 선별, 결측치 처리 |
+| 피처 엔지니어링 | 스마트폰 사용 시간 범주화, 과의존 점수, 수면 상태, 구강 위험 타깃 생성 |
 | EDA | 스마트폰 사용, 수면, 구강 건강 관련 시각화 |
 | 통계 분석 | 변수별 구강 건강 위험 요인 분석 |
-| 모델링 | 머신러닝 모델 학습 및 성능 비교 |
+| 모델링 | Logistic Regression, Random Forest, XGBoost, LightGBM, CatBoost 비교 |
+| 모델 최적화 | Optuna 기반 하이퍼파라미터 튜닝 및 임계값 조정 |
 | 서비스 구현 | Streamlit 기반 예측 웹 서비스 개발 |
 | 결과 해석 | 예측 결과와 맞춤형 솔루션 연결 |
 | 문서화 | README 및 발표자료 구성 |
