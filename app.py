@@ -282,7 +282,7 @@ def prediction_tab(xgb_model, xgb_scaler, xgb_meta) -> None:
         with c1: weekday = st.selectbox("주중 스마트폰 사용 시간", TIME_OPTIONS)
         with c2: weekend = st.selectbox("주말 스마트폰 사용 시간", TIME_OPTIONS)
 
-        predict_submitted = st.form_submit_button("진단 결과 확인하기", type="primary", width="stretch")
+        predict_submitted = st.form_submit_button("진단 결과 확인하기", type="primary", use_container_width=True)
 
     if predict_submitted:
         total_sp_score = sum(sp_scores)
