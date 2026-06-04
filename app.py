@@ -327,7 +327,7 @@ def medical_tab(key_suffix: str = "main") -> None:
             st.markdown("#### 주변 치과 찾기")
             location = st.text_input("지역 또는 주소", placeholder="예: 서울 성동구 / 왕십리", key=f"loc_{key_suffix}")
             keyword = st.selectbox("검색 유형", ["치과", "청소년 치과", "예방 진료 치과", "야간 진료 치과"], key=f"kw_{key_suffix}")
-            if st.button("주변 치과 검색", width="stretch", key=f"btn_search_{key_suffix}"):
+            if st.button("주변 치과 검색", use_container_width=True, key=f"btn_search_{key_suffix}"):
                 query = quote_plus(f"{location} {keyword}".strip())
                 st.markdown(f"[지도에서 확인하기](https://www.google.com/maps/search/?api=1&query={query})")
         with st.container(border=True):
@@ -335,7 +335,7 @@ def medical_tab(key_suffix: str = "main") -> None:
             name = st.text_input("이름", key=f"r_name_{key_suffix}")
             st.date_input("희망 날짜", key=f"r_date_{key_suffix}")
             st.text_area("증상 또는 요청 사항", placeholder="예: 치아 통증, 잇몸 출혈, 스케일링 문의", key=f"r_note_{key_suffix}")
-            if st.button("예약 요청 저장", type="primary", width="stretch", key=f"btn_save_{key_suffix}"):
+            if st.button("예약 요청 저장", type="primary", use_container_width=True, key=f"btn_save_{key_suffix}"):
                 if name: st.success(f"{name}님의 예약 요청이 저장되었습니다.")
                 else: st.warning("이름을 입력해 주세요.")
     with c2:
