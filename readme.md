@@ -231,10 +231,6 @@ Streamlit 서비스 연동
 
 <br/>
 
-> 모델별 정량 성능표는 추후 Accuracy, Precision, Recall, F1-score, ROC-AUC 기준으로 추가할 예정입니다.
-
-<br/>
-
 ### 모델 선정 기준
 
 본 프로젝트는 헬스케어 위험도 예측 서비스이기 때문에  
