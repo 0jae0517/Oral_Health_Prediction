@@ -10,7 +10,7 @@
 
 | 구분 | 링크 |
 |---|---|
-| 발표자료 | [발표자료 보기](https://drive.google.com/file/d/1j-8EbZOCZkepf_FD33XVYiCSTOmO44Tz/view?usp=sharing) |
+| 발표자료 | [발표자료 보기](https://docs.google.com/presentation/d/1WzqmbG6LJnliDJYnZMHXpBtiygpEmZB6/edit?usp=sharing&ouid=116000083308723048290&rtpof=true&sd=true) |
 | GitHub Repository | [Oral_Health_Prediction](https://github.com/0jae0517/Oral_Health_Prediction) |
 | Streamlit Demo | [시연 영상 보기](https://drive.google.com/file/d/1j-8EbZOCZkepf_FD33XVYiCSTOmO44Tz/view?usp=sharing) |
 
