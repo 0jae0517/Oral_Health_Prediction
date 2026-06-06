@@ -433,7 +433,7 @@ streamlit run app.py
 실제 위험군을 놓치지 않는 것이 중요합니다.
 
 따라서 최종 모델 선정 시 단순 정확도보다  
-**재현율(Recall)**과 **F1-Score**를 중요하게 고려했습니다.
+**Recall**과 **F1-Score**를 중요하게 고려했습니다.
 
 - XGBoost는 가장 높은 Recall인 **0.8522**를 기록했습니다.
 - CatBoost 역시 Recall 0.8520으로 유사한 성능을 보였으나, XGBoost가 F1-Score에서 소폭 우세했습니다.
