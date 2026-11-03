@@ -1,0 +1,8 @@
+# 원시자료 (질병관리청 이용 승인 자료, 재배포 금지)
+data/raw/
+*.sas7bdat
+
+# 개인 작업 폴더
+portfolio/
+.claude/
+__pycache__/

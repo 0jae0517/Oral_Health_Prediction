@@ -254,9 +254,9 @@ Optuna 기반 하이퍼파라미터 튜닝
         ↓
 모델별 성능 비교
         ↓
-Recall 목표 기반 임계값 조정
+Recall 목표(0.85) 기반 선별 임계값 계산
         ↓
-Youden's Index 기반 최종 임계값 계산
+Youden's Index 기반 고위험 임계값 계산
         ↓
 최종 XGBoost 모델 저장 및 Streamlit 연동
 ```
@@ -285,7 +285,7 @@ Youden's Index 기반 최종 임계값 계산
 | Trial 수 | 30회 |
 | 주요 평가 기준 | Recall, F1-score, ROC-AUC |
 | 목표 Recall | 약 0.85 |
-| 임계값 설정 | Recall 목표 기반 탐색 + Youden's Index |
+| 임계값 설정 | 선별 임계값(Recall 0.85 목표, 0.397) + 고위험 임계값(Youden's Index, 0.4996) |
 | 최종 저장 모델 | XGBoost |
 
 <br/>
@@ -334,7 +334,7 @@ Oral_Health_Prediction/
 ├── README.md
 │
 ├── data/
-│   ├── raw/
+│   ├── raw/                       # 원시자료 (저장소 미포함, 아래 "데이터 준비" 참고)
 │   │   └── kyrbs2020.sas7bdat
 │   └── processed/
 │       └── kyrbs2020_clean_v1.csv
@@ -380,7 +380,15 @@ cd Oral_Health_Prediction
 
 <br/>
 
-### 2. Install Requirements
+### 2. 데이터 준비
+
+청소년건강행태조사 원시자료는 질병관리청 이용 승인을 받아야 하므로 저장소에 포함하지 않았습니다.  
+[청소년건강행태조사 홈페이지](https://www.kdca.go.kr/yhs/)에서 원시자료 이용 신청 후 제16차(2020년) SAS 파일을 받아  
+`data/raw/kyrbs2020.sas7bdat` 경로에 넣고 `01_Data_Preprocessing.ipynb`를 실행하세요.
+
+<br/>
+
+### 3. Install Requirements
 
 ```bash
 pip install -r requirements.txt
@@ -388,7 +396,7 @@ pip install -r requirements.txt
 
 <br/>
 
-### 3. Train Model
+### 4. Train Model
 
 ```bash
 python train.py
@@ -396,7 +404,7 @@ python train.py
 
 <br/>
 
-### 4. Run Streamlit App
+### 5. Run Streamlit App
 
 ```bash
 streamlit run app.py
@@ -410,8 +418,9 @@ streamlit run app.py
 
 ## 3-1. Model Performance
 
-본 프로젝트에서는 5개 모델을 비교한 결과,  
-**XGBoost가 Recall 0.8522, F1-Score 0.6691로 가장 우수한 최종 모델**로 선정되었습니다.
+5개 모델을 비교한 결과, 트리 계열 4개 모델의 ROC-AUC가 0.647~0.649로 **사실상 차이가 없었습니다.**  
+설문 변수만으로는 구강 증상 예측력에 한계가 있다는 점을 확인했고, 이에 따라 모델 간 미세한 성능 차이보다  
+**선별(screening) 서비스로서 위험군을 놓치지 않도록 임계값을 설계하는 것**에 초점을 맞췄습니다.
 
 <br/>
 
@@ -429,16 +438,18 @@ streamlit run app.py
 
 ### 성능 해석
 
-본 프로젝트는 헬스케어 위험도 예측 서비스이므로  
-실제 위험군을 놓치지 않는 것이 중요합니다.
+- 모든 모델의 임계값은 검증셋에서 **Recall ≈ 0.85**가 되도록 맞췄습니다. 따라서 표의 Recall은 모델 간 비교 지표가 아니라 임계값 설계 결과입니다.
+- 모델 비교는 임계값과 무관한 **ROC-AUC**를 기준으로 했습니다. XGBoost(0.6492), CatBoost(0.6489), LightGBM(0.6489)이 사실상 동률이었으며, Train-Test AUC 차이가 가장 작은 XGBoost(0.0019)를 최종 모델로 채택했습니다.
+- Logistic Regression은 AUC 0.5318로 트리 계열과 차이가 커 최종 후보에서 제외했습니다.
+- 최종 서비스는 두 개의 임계값을 사용합니다.
 
-따라서 최종 모델 선정 시 단순 정확도보다  
-**Recall**과 **F1-Score**를 중요하게 고려했습니다.
+| 구간 | 기준 | 의미 |
+|---|---|---|
+| 낮음 | 확률 < 0.397 | 선별 기준 미만 |
+| 보통 | 0.397 ≤ 확률 < 0.4996 | 선별 임계값(Recall 0.85) 이상 → 관리 솔루션 제공 |
+| 높음 | 확률 ≥ 0.4996 | Youden's Index 최적점(민감도 0.61 / 특이도 0.62) 이상 |
 
-- XGBoost는 가장 높은 Recall인 **0.8522**를 기록했습니다.
-- CatBoost 역시 Recall 0.8520으로 유사한 성능을 보였으나, XGBoost가 F1-Score에서 소폭 우세했습니다.
-- Logistic Regression은 Recall은 높지만 AUC와 F1-Score가 낮아 최종 모델로는 부적합하다고 판단했습니다.
-- 최종 서비스에서는 XGBoost 모델과 Youden's Index 기반 임계값을 활용했습니다.
+- "보통" 이상을 위험군으로 안내하므로, 실제 구강 증상 경험자의 약 85%가 관리 솔루션을 받도록 설계했습니다. 대신 정밀도는 약 0.55로, 위험군으로 안내받은 사람 중 상당수는 실제 증상이 없을 수 있습니다.
 
 <br/>
 
@@ -593,17 +604,15 @@ EDA 분석 결과를 기반으로 스마트폰 사용 시간, 수면 상태, 구
 
 ## 3-6. My Role
 
+3인 팀 프로젝트로, 아래 역할을 담당했습니다.
+
 | 역할 | 내용 |
 |---|---|
+| 기획 | 선행 연구 검토, 문제 정의 및 분석 변수 설계 |
+| 데이터 수집 | 질병관리청 원시자료 이용 신청 및 SAS 원자료 확보, 이용지침서 기반 변수 정의 확인 |
 | 데이터 전처리 | KYRBS 2020 원시자료 로드, 주요 변수 선별, 결측치 처리 |
-| 피처 엔지니어링 | 스마트폰 사용 시간 범주화, 과의존 점수, 수면 상태, 구강 위험 타깃 생성 |
-| EDA | 스마트폰 사용, 수면, 구강 건강 관련 시각화 |
-| 통계 분석 | 변수별 구강 건강 위험 요인 분석 |
-| 모델링 | Logistic Regression, Random Forest, XGBoost, LightGBM, CatBoost 비교 |
-| 모델 최적화 | Optuna 기반 하이퍼파라미터 튜닝 및 임계값 조정 |
-| 서비스 구현 | Streamlit 기반 예측 웹 서비스 개발 |
-| 결과 해석 | 예측 결과와 맞춤형 솔루션 연결 |
-| 문서화 | README 및 발표자료 구성 |
+| 피처 엔지니어링 | 스마트폰 사용 시간 범주화, 과의존 점수, 불안 점수, 수면 상태, 구강 위험 타깃 생성 |
+| 통계 분석 | 가중 교차분석(Rao-Scott 보정 카이제곱), VIF 검증, 위계적 로지스틱 회귀(`02_Statistical_Analysis.ipynb`) |
 
 <br/>
 

@@ -120,14 +120,18 @@ def weighted_distribution(df: pd.DataFrame, col: str, weight_col: str = "가중�
     out["비율"] = out["가중치합"] / out["가중치합"].sum()
     return out.sort_values("비율", ascending=False)
 
-def risk_label(prob: float, threshold: float = 0.4996) -> str:
-    if prob >= threshold: return "높음"
-    if prob >= (threshold * 0.8): return "보통"
+# 위험도 구간
+# - 선별 임계값(screen_thr): 검증셋에서 Recall ≈ 0.85가 되도록 정한 값. 이 이상이면 "보통" 이상(관리 필요)으로 분류
+#   → 실제 구강 증상 경험자의 약 85%를 놓치지 않는 것이 선별 서비스의 목표
+# - 높음 임계값(high_thr): Youden's Index 최적점. 민감도·특이도 균형 기준으로 더 확실한 위험군만 "높음"
+def risk_label(prob: float, high_thr: float = 0.4996, screen_thr: float = 0.397) -> str:
+    if prob >= high_thr: return "높음"
+    if prob >= screen_thr: return "보통"
     return "낮음"
 
-def get_risk_colors(prob: float, threshold: float = 0.4996) -> tuple[str, str, str]:
-    if prob >= threshold: return "#b42318", "#fbeae9", "#b42318" 
-    if prob >= (threshold * 0.8): return "#b26a00", "#fdf2e3", "#b26a00" 
+def get_risk_colors(prob: float, high_thr: float = 0.4996, screen_thr: float = 0.397) -> tuple[str, str, str]:
+    if prob >= high_thr: return "#b42318", "#fbeae9", "#b42318" 
+    if prob >= screen_thr: return "#b26a00", "#fdf2e3", "#b26a00" 
     return "#067647", "#e5f5ed", "#067647" 
 
 # ==========================================
@@ -293,14 +297,15 @@ def prediction_tab(xgb_model, xgb_scaler, xgb_meta) -> None:
         X_scaled = xgb_scaler.transform(X_raw)
         prob = float(xgb_model.predict_proba(X_scaled)[0, 1])
         
-        # 모델의 Youden's 임계값 가져오기
-        threshold = xgb_meta.get("youden_threshold", 0.4996)
-        risk = risk_label(prob, threshold)
+        # 선별 임계값(Recall 목표)과 높음 임계값(Youden) 가져오기
+        screen_thr = xgb_meta.get("recall_threshold", 0.397)
+        high_thr = xgb_meta.get("youden_threshold", 0.4996)
+        risk = risk_label(prob, high_thr, screen_thr)
         
         st.session_state["diag_sp_group"] = sp_group
         st.session_state["diag_oral_risk"] = risk
         
-        t_color, bg_color, b_color = get_risk_colors(prob, threshold)
+        t_color, bg_color, b_color = get_risk_colors(prob, high_thr, screen_thr)
 
         res_c1, res_c2 = st.columns(2)
         with res_c1:
